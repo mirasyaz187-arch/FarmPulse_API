@@ -496,6 +496,57 @@ def get_current_price(
             "data": []
         }
 
+    @app.get("/api/inventory")
+def get_inventory(user_id: str):
+
+    db_error = require_db()
+
+    if db_error is not None:
+        return db_error
+
+    db_client = db
+    assert db_client is not None
+
+    try:
+
+        inventory_ref = (
+            db_client.collection("inventory")
+            .where(
+                "user_id",
+                "==",
+                user_id
+            )
+        )
+
+        docs = inventory_ref.stream()
+
+        inventory = []
+
+        for doc in docs:
+
+            data = doc.to_dict() or {}
+
+            data["id"] = doc.id
+
+            if "item_name" in data:
+                data["name"] = data["item_name"]
+
+            inventory.append(data)
+
+        return {
+            "status": "success",
+            "count": len(inventory),
+            "data": inventory
+        }
+
+    except Exception as e:
+
+        return {
+            "status": "error",
+            "message": str(e),
+            "data": []
+        }
+
     # ==========================================
     # LATEST AVAILABLE DATE
     # ==========================================
